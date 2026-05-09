@@ -269,8 +269,8 @@ __do_fork (void *aux) {
 	// CPU의 주소 변환 기준을 자식 pml4로 바꾼다.
 	process_activate (thread_current());
 #ifdef VM
-	supplemental_page_table_init (&current->spt);
-	if (!supplemental_page_table_copy (&current->spt, &parent->spt))
+	supplemental_page_table_init (&thread_current()->spt);
+	if (!supplemental_page_table_copy (&thread_current()->spt, &parent->spt))
 		goto error;
 #else
 	// 부모 주소 공간 복제
