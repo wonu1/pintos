@@ -2,6 +2,7 @@
     "name": "pintos-dev",
     "dockerFile": "Dockerfile",
     "remoteUser": "jungle",
+    "postCreateCommand": "source /workspaces/pintos/pintos/activate && chmod +x /workspaces/pintos/pintos/utils/pintos",
     "customizations": {
         "vscode": {
             "extensions": [
