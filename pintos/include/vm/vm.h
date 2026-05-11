@@ -49,6 +49,7 @@ struct page
 
 	/* Your implementation */
 	// 📌 TODO: read-only, read/write 권한 정보 넣는 멤버 변수 필요
+	bool writable;
 
 	/* Per-type data are binded into the union.
 	 * Each function automatically detects the current union */
