@@ -79,12 +79,15 @@ err:
 	return false;
 }
 
-/* Find VA from spt and return page. On error, return NULL. */
+/* 주어진 supplemental page table에서 va에 대응하는 struct page를 찾습니다. 실패하면 NULL을 반환합니다. */
 struct page *
 spt_find_page(struct supplemental_page_table *spt UNUSED, void *va UNUSED)
 {
 	struct page *page = NULL;
-	/* TODO: Fill this function. */
+	struct hash_elem *e;
+
+	e = hash_find(&spt->hash_table, );
+
 
 	return page;
 }
@@ -152,12 +155,12 @@ vm_get_frame(void)
 		// page_evict();
 		// if (page_evict() == 실패) { PANIC("todo");}
 
-		page_evict();
-		frame->kva = new_page_va;
+		// page_evict();
+		// frame->kva = new_page_va;
 
-		if(!page_evict()){
-			PANIC("todo");
-		}
+		// if(!page_evict()){
+		// 	PANIC("todo");
+		
 	}
 	else
 	{
