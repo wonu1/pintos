@@ -81,15 +81,17 @@ err:
 
 /* 주어진 supplemental page table에서 va에 대응하는 struct page를 찾습니다. 실패하면 NULL을 반환합니다. */
 struct page *
-spt_find_page(struct supplemental_page_table *spt UNUSED, void *va UNUSED)
-{
-	struct page *page = NULL;
+spt_find_page (struct supplemental_page_table *spt, void *va) {
+	
+	/* 타입 설계 원칙 : 지역 변수로 Page를 만듦 */
+	struct page p;
 	struct hash_elem *e;
 
-	e = hash_find(&spt->hash_table, );
+	p.va = va;
+	e = hash_find(&spt->hash_table, &p.hash_elem);
 
-
-	return page;
+	/* 조건 ? 참일때 실행 : 거짓일 때 실행 */
+	return e != NULL ? hash_entry (e, struct page, hash_elem) : NULL; 
 }
 
 /* Insert PAGE into spt with validation. */
