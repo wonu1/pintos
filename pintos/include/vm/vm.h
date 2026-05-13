@@ -2,6 +2,7 @@
 #define VM_VM_H
 #include <stdbool.h>
 #include "threads/palloc.h"
+#include <hash.h>
 
 enum vm_type
 {
@@ -49,6 +50,9 @@ struct page
 
 	/* Your implementation */
 	// 📌 TODO: read-only, read/write 권한 정보 넣는 멤버 변수 필요
+	bool writable;
+
+	struct hash_elem hash_elem;
 
 	/* Per-type data are binded into the union.
 	 * Each function automatically detects the current union */
@@ -94,11 +98,11 @@ struct page_operations
 	if ((page)->operations->destroy) \
 	(page)->operations->destroy(page)
 
-/* Representation of current process's memory space.
- * We don't want to force you to obey any specific design for this struct.
- * All designs up to you for this. */
-struct supplemental_page_table
-{
+/*	1. spt는 page fault 처리를 위해 쓰임
+	2. key: va(파일로드 upage), value: struct page
+	3. 페이지 테이블 엔트리(8byte)에 주소와 다른 정보(swapdisk주소, 페이지타입 .. 기타등등)을 적기엔 적다 */
+struct supplemental_page_table {
+	struct hash hash_table;
 };
 
 #include "threads/thread.h"
