@@ -156,24 +156,25 @@ static struct frame *
 vm_get_frame(void)
 {
 	struct frame *frame = NULL;
-	/* TODO: Fill this function. */
 	void *new_page_va = palloc_get_page(PAL_USER);
 	if (new_page_va == NULL)
 	{
 		// page evict 하고 페이지 리턴하기
-		// page_evict();
-		// if (page_evict() == 실패) { PANIC("todo");}
+		// TODO: 
+		// if (page_evict() == 실패) { PANIC("todo");}	
 
 		// page_evict();
 		// frame->kva = new_page_va;
 
 		// if(!page_evict()){
-		// 	PANIC("todo");
+		PANIC("todo");
 	}
 	else
 	{
 		// 1) user pool에서 page를 성공적으로 얻으면 frame도 할당하고,
+		frame = malloc (sizeof (struct frame));
 		// 2) 그 멤버들을 초기화한 뒤 반환합니다
+		frame->kva = new_page_va;
 	}
 
 	ASSERT(frame != NULL);

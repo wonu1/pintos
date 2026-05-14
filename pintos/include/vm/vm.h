@@ -73,9 +73,7 @@ struct frame
 	 */
 	void *kva;
 
-	/*	💬추측: frame을 참조하고 있는 page
-		💬추측2: evict한 page
-	*/
+	/*	💬추측: frame을 참조하고 있는 page	*/
 	struct page *page;
 };
 
