@@ -194,26 +194,33 @@ vm_handle_wp(struct page *page UNUSED)
 }
 
 /* Return true on success */
-bool vm_try_handle_fault(struct intr_frame *f UNUSED, void *addr UNUSED,
+bool vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr UNUSED,
 						 bool user UNUSED, bool write UNUSED, bool not_present UNUSED) {
-
+	/* 권한이 없는 주소에 접근하려고 할 때*/
 	if (not_present == false) {
-		process_exit();
+		process_exit ();
 		return false;
 	}
 	// 현재 thread(process)의 spt의 주소를 설정
-	struct supplemental_page_table *spt UNUSED = &thread_current()->spt;
-	/* 📌 TODO: 가설1) malloc으로 구조체 사이즈만큼 할당
-				가설2) page 단위로 할당
-	 */
-	struct page *page = NULL;
-	/* TODO: Validate the fault */
+	struct supplemental_page_table *spt = &thread_current ()->spt;
+	struct page *page = spt_find_page (spt, addr);
 
-	/* TODO: Your code goes here */
-	// 📌 TODO: page 초기화
-	// 1) page->va 에 addr 초기화
-	// 2) Page에 write/read 정보가 필요함 (false: read-only, true: read/write)
-
+	if (page == NULL) {
+		vm_stack_growth (); /* TODO: stack 할 때 진행 */
+	} else {
+		/* read-only 페이지에 쓰려고 할 때 */
+		if (write && !page->writable) {
+			process_exit ();
+			return false;
+		}
+	
+		/* User 모드에서 커널 주소에 접근하려고 할 때*/
+		if (user && is_kernel_vaddr(addr)) {
+			process_exit ();
+			return false;
+		}
+	}
+	
 	return vm_do_claim_page(page);
 }
 
