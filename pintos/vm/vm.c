@@ -256,12 +256,11 @@ vm_do_claim_page(struct page *page)
 	/* Set links */
 	frame->page = page;
 	page->frame = frame;
-
-	/* TODO: Insert page table entry to map page's VA to frame's PA. */
-	// 해당 페이지에 대한
-	// pml4_set_page(현재 쓰레드에서 pml4 가져오고, upage, frame에서 가져오는거 아닐까?, read/write);
-	// if (pml4_set_page == 실패) return false;
-
+	
+	/* 페이지 테이블 엔트리를 맵 페이지의 VA와 프레임의 PA로 연결 */
+	if (!pml4_set_page(thread_current()->pml4, page->va, frame->kva, page->writable)) {
+		return false;
+	}
 	return swap_in(page, frame->kva);
 }
 
