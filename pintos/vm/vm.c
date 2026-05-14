@@ -195,8 +195,12 @@ vm_handle_wp(struct page *page UNUSED)
 
 /* Return true on success */
 bool vm_try_handle_fault(struct intr_frame *f UNUSED, void *addr UNUSED,
-						 bool user UNUSED, bool write UNUSED, bool not_present UNUSED)
-{
+						 bool user UNUSED, bool write UNUSED, bool not_present UNUSED) {
+
+	if (not_present == false) {
+		process_exit();
+		return false;
+	}
 	// 현재 thread(process)의 spt의 주소를 설정
 	struct supplemental_page_table *spt UNUSED = &thread_current()->spt;
 	/* 📌 TODO: 가설1) malloc으로 구조체 사이즈만큼 할당
