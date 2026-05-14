@@ -49,7 +49,6 @@ struct page
 	struct frame *frame; /* 💬 추측: 해당 페이지와 매핑된 frame Back reference for frame */
 
 	/* Your implementation */
-	// 📌 TODO: read-only, read/write 권한 정보 넣는 멤버 변수 필요
 	bool writable;
 
 	struct hash_elem hash_elem;
