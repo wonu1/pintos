@@ -74,6 +74,9 @@ bool vm_alloc_page_with_initializer(enum vm_type type, void *upage, bool writabl
 		if (page == NULL) {
 			return false;
 		}
+
+		/* 📌TODO: type에 따라 initializer를 설정하자! */
+
 		uninit_new(page, upage, init, type, aux, anon_initializer);
 		page->writable = writable;
 
