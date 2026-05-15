@@ -27,6 +27,14 @@ static bool load (const char *file_name, struct intr_frame *if_);
 static void initd (void *f_name);
 static void __do_fork (void *);
 
+/* aux를 통해 넘길 struct 정의 */
+struct file_info {
+	char *file_name;
+	off_t ofs;
+	uint32_t read_bytes;
+	uint32_t zero_bytes;
+};
+
 struct initd_info {
 	char *file_name;
 	struct child_info *child_info;
@@ -500,6 +508,8 @@ struct ELF64_PHDR {
 	uint64_t p_align;
 };
 
+
+
 /* Abbreviations */
 #define ELF ELF64_hdr
 #define Phdr ELF64_PHDR
@@ -564,6 +574,7 @@ load (const char *file_name, struct intr_frame *if_) {
 		printf ("load: %s: open failed\n", argv[0]);
 		goto done;
 	}
+	t->file_name = argv[0];
 
 	/* Read and verify executable header. */
 	if (file_read (file, &ehdr, sizeof ehdr) != sizeof ehdr
@@ -874,7 +885,12 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
 		/* TODO: Set up aux to pass information to the lazy_load_segment. */
-		void *aux = NULL;
+		struct file_info *aux = malloc(sizeof(file_info));
+		strlcpy(aux->file_name, thread_current()->file_name, sizeof(thread_current()->file_name));
+		aux->ofs = ofs;
+		aux->read_bytes = read_bytes;
+		aux->zero_bytes = zero_bytes;
+
 		if (!vm_alloc_page_with_initializer (VM_ANON, upage,
 					writable, lazy_load_segment, aux))
 			return false;

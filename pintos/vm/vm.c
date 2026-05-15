@@ -1,4 +1,4 @@
-/* vm.c: Generic interface for virtual memory objects. */
+/* : Generic interface for virtual memory objects. */
 
 #include "threads/malloc.h"
 #include "threads/vaddr.h"
@@ -75,9 +75,15 @@ bool vm_alloc_page_with_initializer(enum vm_type type, void *upage, bool writabl
 			return false;
 		}
 
-		/* 📌TODO: type에 따라 initializer를 설정하자! */
+		switch (type) {	
+		case VM_FILE:
+			uninit_new(page, upage, init, type, aux, file_backed_initializer);
+			break;
+		case VM_ANON:
+		default:
+			uninit_new(page, upage, init, type, aux, anon_initializer);
+		}
 
-		uninit_new(page, upage, init, type, aux, anon_initializer);
 		page->writable = writable;
 
 		/* TODO: Insert the page into the spt. */
