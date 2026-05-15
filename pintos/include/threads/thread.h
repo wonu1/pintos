@@ -115,6 +115,7 @@ struct thread {
 	struct lock *waiting_lock;     /* 현재 기다리는 lock. */
 	struct list donations;         /* 나에게 donation한 thread 목록. */
 	struct list_elem donation_elem;
+
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
 	uint64_t *pml4;                 /* Page map level 4 */
@@ -127,6 +128,8 @@ struct thread {
 #ifdef VM
 	/* Table for whole virtual memory owned by thread. */
 	struct supplemental_page_table spt;
+	char *file_name;
+
 #endif
 
 	/* Owned by thread.c. */

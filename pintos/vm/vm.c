@@ -1,6 +1,7 @@
 /* vm.c: Generic interface for virtual memory objects. */
 
 #include "threads/malloc.h"
+#include "threads/vaddr.h"
 #include "vm/vm.h"
 #include "vm/inspect.h"
 
@@ -73,7 +74,16 @@ bool vm_alloc_page_with_initializer(enum vm_type type, void *upage, bool writabl
 		if (page == NULL) {
 			return false;
 		}
-		uninit_new(page, upage, init, type, aux, anon_initializer);
+
+		switch (type) {	
+		case VM_FILE:
+			uninit_new(page, upage, init, type, aux, file_backed_initializer);
+			break;
+		case VM_ANON:
+		default:
+			uninit_new(page, upage, init, type, aux, anon_initializer);
+		}
+
 		page->writable = writable;
 
 		/* TODO: Insert the page into the spt. */
@@ -207,7 +217,7 @@ bool vm_try_handle_fault (struct intr_frame *f UNUSED, void *addr UNUSED,
 	struct page *page = spt_find_page (spt, addr);
 
 	if (page == NULL) {
-		vm_stack_growth (); /* TODO: stack 할 때 진행 */
+		// vm_stack_growth (); /* TODO: stack 할 때 진행 */
 	} else {
 		/* read-only 페이지에 쓰려고 할 때 */
 		if (write && !page->writable) {
