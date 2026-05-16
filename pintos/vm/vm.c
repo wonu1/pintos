@@ -100,8 +100,9 @@ spt_find_page (struct supplemental_page_table *spt, void *va) {
 	/* 타입 설계 원칙 : 지역 변수로 Page를 만듦 */
 	struct page p;
 	struct hash_elem *e;
-
-	p.va = va;
+	
+	/* VA가 속한 페이지의 시작주소로 맞춰 줌 */
+	p.va = pg_round_down(va);
 	e = hash_find(&spt->hash_table, &p.hash_elem);
 
 	/* 조건 ? 참일때 실행 : 거짓일 때 실행 */
