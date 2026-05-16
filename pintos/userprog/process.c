@@ -847,11 +847,30 @@ install_page (void *upage, void *kpage, bool writable) {
  * If you want to implement the function for only project 2, implement it on the
  * upper block. */
 
+/* lazy_load_segment의 정의 : aux에 있는 file_info와 struct page를 토대로 file의 offset(file에서 실제 데이터가 들어 있는 주소)부터 page_read_byte 물리메모리에 올림.
+즉, VM에서는 기존 USERPROG의 load_segment가 하던 역할을 둘로 분리한 것. */
 static bool
 lazy_load_segment (struct page *page, void *aux) {
 	/* TODO: Load the segment from the file */
 	/* TODO: This called when the first page fault occurs on address VA. */
 	/* TODO: VA is available when calling this function. */
+	struct file *file = NULL;
+	struct file_info *info = (struct file_info *)aux; 
+	uint8_t *kpage = page->frame->kva;
+	uint8_t *upage = page->va;
+	file = filesys_open (info->file_name);
+	
+	file_seek (file, info->ofs);
+	
+	/* Load this page. */
+	if (file_read (file, kpage, info->page_read_bytes) != (int) info->page_read_bytes) {
+		palloc_free_page (kpage);
+		return false;
+	}
+	memset (kpage + page_read_bytes, 0, page_zero_bytes);
+
+	
+	file_close(file);
 }
 
 /* Loads a segment starting at offset OFS in FILE at address
