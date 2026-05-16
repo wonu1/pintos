@@ -868,6 +868,14 @@ lazy_load_segment (struct page *page, void *aux) {
  *
  * Return true if successful, false if a memory allocation error
  * or disk read error occurs. */
+
+/*
+load의 정의, 역할 : ELF 파일을 open하고 먼저 ELF header(64byte 만큼만)를 읽은 후, Program Header Table까지 읽음. 이 함수에서 load_segment를 호출함.
+USERPROG에서 load_segment의 정의 : file의 offset(file에서 실제 데이터가 들어 있는 주소)부터 page_read_bytes로 읽음과 동시에 물리 메모리에 올림. 
+VM에서 load_segment의 정의 : file의 offset(file에서 실제 데이터가 들어 있는 주소)부터 page_read_bytes로 읽어서 그 가상주소와 메타 데이터를 struct Page에 저장함. 
+lazy_load_segment의 정의 : aux에 있는 file_info와 struct page를 토대로 file의 offset(file에서 실제 데이터가 들어 있는 주소)부터 page_read_byte 물리메모리에 올림.
+즉, VM에서는 기존 USERPROG의 load_segment가 하던 역할을 둘로 분리한 것.
+*/
 static bool
 load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		uint32_t read_bytes, uint32_t zero_bytes, bool writable) {
@@ -875,6 +883,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 	ASSERT (pg_ofs (upage) == 0);
 	ASSERT (ofs % PGSIZE == 0);
 
+	/* read_byte는 총 읽을 양을 뜻하고, page_read_byte는 한 번의 루프에서 읽는 단위(PGSIZE)를 뜻함*/
 	while (read_bytes > 0 || zero_bytes > 0) {
 		/* Do calculate how to fill this page.
 		 * We will read PAGE_READ_BYTES bytes from FILE
