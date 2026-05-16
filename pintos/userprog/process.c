@@ -502,7 +502,7 @@ struct ELF64_PHDR {
 
 /* aux를 통해 넘길 struct 정의 */
 struct file_info {
-	char *file_name;
+	char file_name[LOADER_ARGS_LEN / 2 + 1];
 	off_t ofs;
 	uint32_t read_bytes;
 	uint32_t zero_bytes;
@@ -847,11 +847,29 @@ install_page (void *upage, void *kpage, bool writable) {
  * If you want to implement the function for only project 2, implement it on the
  * upper block. */
 
+/* lazy_load_segment의 정의 : aux에 있는 file_info와 struct page를 토대로 file의 offset(file에서 실제 데이터가 들어 있는 주소)부터 page_read_byte 물리메모리에 올림.
+즉, VM에서는 기존 USERPROG의 load_segment가 하던 역할을 둘로 분리한 것. */
 static bool
 lazy_load_segment (struct page *page, void *aux) {
 	/* TODO: Load the segment from the file */
 	/* TODO: This called when the first page fault occurs on address VA. */
 	/* TODO: VA is available when calling this function. */
+	struct file *file = NULL;
+	struct file_info *info = (struct file_info *)aux; 
+	uint8_t *kpage = page->frame->kva;
+
+	file = filesys_open (info->file_name);
+	file_seek (file, info->ofs);
+	/* 해당 페이지를 Load합니다. */
+	if (file_read (file, kpage, info->read_bytes) != (int) info->read_bytes) {
+		/* 📌 TODO : destroy 함수 구현 후 그것을 통해 정리해야 할 듯 함 */
+		return false;
+	}
+	/* 할당하고 남은 Page의 부분을 0으로 초기화 해줌 */
+	memset (kpage + info->read_bytes, 0, info->zero_bytes);
+	
+	file_close(file);
+	return true;
 }
 
 /* Loads a segment starting at offset OFS in FILE at address
@@ -868,6 +886,14 @@ lazy_load_segment (struct page *page, void *aux) {
  *
  * Return true if successful, false if a memory allocation error
  * or disk read error occurs. */
+
+/*
+load의 정의, 역할 : ELF 파일을 open하고 먼저 ELF header(64byte 만큼만)를 읽은 후, Program Header Table까지 읽음. 이 함수에서 load_segment를 호출함.
+USERPROG에서 load_segment의 정의 : file의 offset(file에서 실제 데이터가 들어 있는 주소)부터 page_read_bytes로 읽음과 동시에 물리 메모리에 올림. 
+VM에서 load_segment의 정의 : file의 offset(file에서 실제 데이터가 들어 있는 주소)부터 page_read_bytes로 읽어서 그 가상주소와 메타 데이터를 struct Page에 저장함. 
+lazy_load_segment의 정의 : aux에 있는 file_info와 struct page를 토대로 file의 offset(file에서 실제 데이터가 들어 있는 주소)부터 page_read_byte 물리메모리에 올림.
+즉, VM에서는 기존 USERPROG의 load_segment가 하던 역할을 둘로 분리한 것.
+*/
 static bool
 load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		uint32_t read_bytes, uint32_t zero_bytes, bool writable) {
@@ -875,6 +901,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 	ASSERT (pg_ofs (upage) == 0);
 	ASSERT (ofs % PGSIZE == 0);
 
+	/* read_byte는 총 읽을 양을 뜻하고, page_read_byte는 한 번의 루프에서 읽는 단위(PGSIZE)를 뜻함*/
 	while (read_bytes > 0 || zero_bytes > 0) {
 		/* Do calculate how to fill this page.
 		 * We will read PAGE_READ_BYTES bytes from FILE
@@ -884,7 +911,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 
 		/* TODO: Set up aux to pass information to the lazy_load_segment. */
 		struct file_info *aux = malloc(sizeof(struct file_info));
-		strlcpy(aux->file_name, thread_current()->file_name, sizeof(thread_current()->file_name));
+		strlcpy(aux->file_name, thread_current()->file_name, LOADER_ARGS_LEN / 2 + 1);
 		aux->ofs = ofs;
 		aux->read_bytes = page_read_bytes;
 		aux->zero_bytes = page_zero_bytes;
@@ -902,17 +929,19 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 	return true;
 }
 
-/* Create a PAGE of stack at the USER_STACK. Return true on success. */
+/* USER_STACK에 페이지로 구성된 스택을 만듭니다. 성공했을 시 True를 반환하세요. */
 static bool
 setup_stack (struct intr_frame *if_) {
 	bool success = false;
 	void *stack_bottom = (void *) (((uint8_t *) USER_STACK) - PGSIZE);
 
-	/* TODO: Map the stack on stack_bottom and claim the page immediately.
-	 * TODO: If success, set the rsp accordingly.
-	 * TODO: You should mark the page is stack. */
-	/* TODO: Your code goes here */
-
+	/* TODO: stack_bottom에 스택을 매핑하고, 즉시 페이지를 요청(claim)합니다.
+	 * TODO: 성공했을 시, rsp를 USER_STACK으로 설정하세요.
+	 * TODO: 페이지가 스택임을 VM_MARKER_0 를 사용해 표시해주어야 합니다. */
+	success = vm_alloc_page(VM_ANON | VM_MARKER_0, stack_bottom, true);
+	if (success) {
+		if_->rsp = USER_STACK;
+	}
 	return success;
 }
 #endif /* VM */
