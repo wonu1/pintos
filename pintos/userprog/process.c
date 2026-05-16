@@ -857,18 +857,16 @@ lazy_load_segment (struct page *page, void *aux) {
 	struct file *file = NULL;
 	struct file_info *info = (struct file_info *)aux; 
 	uint8_t *kpage = page->frame->kva;
-	uint8_t *upage = page->va;
+
 	file = filesys_open (info->file_name);
-	
 	file_seek (file, info->ofs);
-	
-	/* Load this page. */
+	/* 해당 페이지를 Load합니다. */
 	if (file_read (file, kpage, info->page_read_bytes) != (int) info->page_read_bytes) {
-		palloc_free_page (kpage);
+		/* 📌 TODO : destroy 함수 구현 후 그것을 통해 정리해야 할 듯 함 */
 		return false;
 	}
+	/* 할당하고 남은 Page의 부분을 0으로 초기화 해줌 */
 	memset (kpage + page_read_bytes, 0, page_zero_bytes);
-
 	
 	file_close(file);
 }
