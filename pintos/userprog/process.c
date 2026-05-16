@@ -502,7 +502,7 @@ struct ELF64_PHDR {
 
 /* aux를 통해 넘길 struct 정의 */
 struct file_info {
-	char *file_name;
+	char file_name[LOADER_ARGS_LEN / 2 + 1];
 	off_t ofs;
 	uint32_t read_bytes;
 	uint32_t zero_bytes;
@@ -910,7 +910,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 
 		/* TODO: Set up aux to pass information to the lazy_load_segment. */
 		struct file_info *aux = malloc(sizeof(struct file_info));
-		strlcpy(aux->file_name, thread_current()->file_name, sizeof(thread_current()->file_name));
+		strlcpy(aux->file_name, thread_current()->file_name, LOADER_ARGS_LEN / 2 + 1);
 		aux->ofs = ofs;
 		aux->read_bytes = page_read_bytes;
 		aux->zero_bytes = page_zero_bytes;
