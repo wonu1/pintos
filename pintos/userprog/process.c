@@ -937,7 +937,7 @@ setup_stack (struct intr_frame *if_) {
 	/* TODO: stack_bottom에 스택을 매핑하고, 즉시 페이지를 요청(claim)합니다.
 	 * TODO: 성공했을 시, rsp를 USER_STACK으로 설정하세요.
 	 * TODO: 페이지가 스택임을 VM_MARKER_0 를 사용해 표시해주어야 합니다. */
-	success = vm_alloc_page(VM_MARKER_0, stack_bottom, true);
+	success = vm_alloc_page(VM_ANON | VM_MARKER_0, stack_bottom, true);
 	if (success) {
 		if_->rsp = USER_STACK;
 	}

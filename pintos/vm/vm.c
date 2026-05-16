@@ -190,7 +190,6 @@ vm_get_frame(void)
 	}
 
 	ASSERT(frame != NULL);
-	/* */
 	ASSERT(frame->page == NULL);
 	return frame;
 }
