@@ -869,6 +869,7 @@ lazy_load_segment (struct page *page, void *aux) {
 	memset (kpage + info->read_bytes, 0, info->zero_bytes);
 	
 	file_close(file);
+	return true;
 }
 
 /* Loads a segment starting at offset OFS in FILE at address
