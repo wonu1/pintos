@@ -861,12 +861,12 @@ lazy_load_segment (struct page *page, void *aux) {
 	file = filesys_open (info->file_name);
 	file_seek (file, info->ofs);
 	/* 해당 페이지를 Load합니다. */
-	if (file_read (file, kpage, info->page_read_bytes) != (int) info->page_read_bytes) {
+	if (file_read (file, kpage, info->read_bytes) != (int) info->read_bytes) {
 		/* 📌 TODO : destroy 함수 구현 후 그것을 통해 정리해야 할 듯 함 */
 		return false;
 	}
 	/* 할당하고 남은 Page의 부분을 0으로 초기화 해줌 */
-	memset (kpage + page_read_bytes, 0, page_zero_bytes);
+	memset (kpage + info->read_bytes, 0, info->zero_bytes);
 	
 	file_close(file);
 }
@@ -928,17 +928,19 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 	return true;
 }
 
-/* Create a PAGE of stack at the USER_STACK. Return true on success. */
+/* USER_STACK에 페이지로 구성된 스택을 만듭니다. 성공했을 시 True를 반환하세요. */
 static bool
 setup_stack (struct intr_frame *if_) {
 	bool success = false;
 	void *stack_bottom = (void *) (((uint8_t *) USER_STACK) - PGSIZE);
 
-	/* TODO: Map the stack on stack_bottom and claim the page immediately.
-	 * TODO: If success, set the rsp accordingly.
-	 * TODO: You should mark the page is stack. */
-	/* TODO: Your code goes here */
-
+	/* TODO: stack_bottom에 스택을 매핑하고, 즉시 페이지를 요청(claim)합니다.
+	 * TODO: 성공했을 시, rsp를 USER_STACK으로 설정하세요.
+	 * TODO: 페이지가 스택임을 VM_MARKER_0 를 사용해 표시해주어야 합니다. */
+	success = vm_alloc_page(VM_MARKER_0, stack_bottom, true);
+	if (success) {
+		if_->rsp = USER_STACK;
+	}
 	return success;
 }
 #endif /* VM */
