@@ -186,9 +186,11 @@ vm_get_frame(void)
 		frame = malloc (sizeof (struct frame));
 		// 2) 그 멤버들을 초기화한 뒤 반환합니다
 		frame->kva = new_page_va;
+		frame->page = NULL;
 	}
 
 	ASSERT(frame != NULL);
+	/* */
 	ASSERT(frame->page == NULL);
 	return frame;
 }
