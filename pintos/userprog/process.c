@@ -20,7 +20,9 @@
 #include "intrinsic.h"
 #ifdef VM
 #include "vm/vm.h"
+#include "include/lib/kernel/hash.h"
 #endif
+
 
 static void process_cleanup (void);
 static bool load (const char *file_name, struct intr_frame *if_);
@@ -407,6 +409,9 @@ process_exit (void) {
 	}
 
 	process_cleanup ();
+	#ifdef VM
+	hash_destroy(&curr->spt.hash_table, NULL);
+	#endif
 }
 
 /* Free the current process's resources. */
