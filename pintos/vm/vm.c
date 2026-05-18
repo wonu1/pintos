@@ -305,14 +305,14 @@ bool supplemental_page_table_copy (struct supplemental_page_table *dst UNUSED,
 		struct page *src_page = hash_entry (hash_cur (&loop_index), struct page, hash_elem);
 		struct page *dst_page = malloc(sizeof(struct page));
 		
-		if (page == NULL) {
+		if (dst_page == NULL) {
 			return false;
 		}
 
 		/* 자식 프로세스의 페이지(dst_page)에 부모 프로세스 페이지(src_page) 정보를 복사하여, 
 			VM_UNINIT 페이지로 초기화한다.*/
 		uninit_new(dst_page, src_page->va, src_page->uninit.init, page_get_type(src_page), 
-			src_page->uninit->aux, src_page->uninit.page_initializer);
+			src_page->uninit.aux, src_page->uninit.page_initializer);
 		
 		/* 부모 프로세스 페이지의 writable & 물리 프레임 내용 복사함 */
 		dst_page->writable = src_page->writable;
