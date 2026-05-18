@@ -51,4 +51,13 @@ anon_swap_out (struct page *page) {
 static void
 anon_destroy (struct page *page) {
 	struct anon_page *anon_page = &page->anon;
+
+	if (page == NULL) {
+		return;
+	}
+	if (page->frame != NULL) {
+		free (page->frame);
+	}
+	/* PAGE will be freed by the caller 라는 문구로 보아 추후 위치 수정이 필요할 수도 있음 */
+	free (page);
 }
