@@ -20,6 +20,7 @@
 #include "intrinsic.h"
 #ifdef VM
 #include "vm/vm.h"
+#include "include/lib/kernel/hash.h"
 #endif
 
 static void process_cleanup (void);
@@ -407,6 +408,9 @@ process_exit (void) {
 	}
 
 	process_cleanup ();
+	#ifdef VM
+	hash_destroy(&curr->spt.hash_table, NULL);
+	#endif
 }
 
 /* Free the current process's resources. */
@@ -911,6 +915,8 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 
 		/* TODO: Set up aux to pass information to the lazy_load_segment. */
 		struct file_info *aux = malloc(sizeof(struct file_info));
+		/*strlcpy는 memcpy에서 하지 않던 문자열의 \0처리를 해줌
+			그리고 문자열 사이즈를 계산하여 사이즈를 더 작은 쪽에 맞춰 줌*/
 		strlcpy(aux->file_name, thread_current()->file_name, LOADER_ARGS_LEN / 2 + 1);
 		aux->ofs = ofs;
 		aux->read_bytes = page_read_bytes;
@@ -938,6 +944,7 @@ setup_stack (struct intr_frame *if_) {
 	/* TODO: stack_bottom에 스택을 매핑하고, 즉시 페이지를 요청(claim)합니다.
 	 * TODO: 성공했을 시, rsp를 USER_STACK으로 설정하세요.
 	 * TODO: 페이지가 스택임을 VM_MARKER_0 를 사용해 표시해주어야 합니다. */
+	/* vm_type에 값 작성시 뒤의 2비트(0,1,2,3)는 타입(enum)에 대한 부분을 쓰고 나머지 비트를 마커로 사용함*/
 	success = vm_alloc_page(VM_ANON | VM_MARKER_0, stack_bottom, true);
 	if (success) {
 		if_->rsp = USER_STACK;

@@ -63,31 +63,31 @@ bool vm_alloc_page_with_initializer(enum vm_type type, void *upage, bool writabl
 
 	ASSERT(VM_TYPE(type) != VM_UNINIT)
 
-	struct supplemental_page_table *spt = &thread_current()->spt;
+	struct supplemental_page_table *spt = &thread_current ()->spt;
 
 	/* Check wheter the upage is already occupied or not. */
-	if (spt_find_page(spt, upage) == NULL) {
+	if (spt_find_page (spt, upage) == NULL) {
 		/* TODO: Create the page, fetch the initialier according to the VM type,
 		 * TODO: and then create "uninit" page struct by calling uninit_new. You
 		 * TODO: should modify the field after calling the uninit_new. */
-		struct page *page = malloc(sizeof(struct page));
+		struct page *page = malloc (sizeof(struct page));
 		if (page == NULL) {
 			return false;
 		}
 
 		switch (type) {	
 		case VM_FILE:
-			uninit_new(page, upage, init, type, aux, file_backed_initializer);
+			uninit_new (page, upage, init, type, aux, file_backed_initializer);
 			break;
 		case VM_ANON:
 		default:
-			uninit_new(page, upage, init, type, aux, anon_initializer);
+			uninit_new (page, upage, init, type, aux, anon_initializer);
 		}
 
 		page->writable = writable;
 
 		/* TODO: Insert the page into the spt. */
-		return spt_insert_page(spt, page);
+		return spt_insert_page (spt, page);
 	}
 err:
 	return false;
@@ -282,15 +282,75 @@ void supplemental_page_table_init(struct supplemental_page_table *spt UNUSED)
 	hash_init(&spt->hash_table, page_hash, page_less, NULL);
 }
 
-/* Copy supplemental page table from src to dst */
-bool supplemental_page_table_copy(struct supplemental_page_table *dst UNUSED,
-								  struct supplemental_page_table *src UNUSED)
-{
+/* Copy supplemental page table from src to dst
+	fork()시 자식이 새로 만드는 것:
+	→ 새 pml4
+	→ 새 SPT
+	→ 부모 페이지 순회하며 내용 복사
+
+	부모에서 복사해오는 것:
+	→ va (가상 주소)
+	→ 페이지 타입 (anon/file)
+	→ writable 여부
+	→ 물리 프레임 내용 (memcpy)
+	→ fd table
+	→ intr_frame */
+bool supplemental_page_table_copy (struct supplemental_page_table *dst UNUSED,
+								  struct supplemental_page_table *src UNUSED) {
+	/* hash table 전체 순회 */
+	struct hash_iterator loop_index;
+
+	hash_first (&loop_index, src);
+	while (hash_next (&loop_index)) {
+		struct page *src_page = hash_entry (hash_cur (&loop_index), struct page, hash_elem);
+		struct page *dst_page = malloc (sizeof(struct page));
+		
+		if (dst_page == NULL) {
+			return false;
+		}
+
+		/* 자식 프로세스의 페이지(dst_page)에 부모 프로세스 페이지(src_page) 정보를 복사하여, 
+			VM_UNINIT 페이지로 초기화한다.*/
+		uninit_new(dst_page, src_page->va, src_page->uninit.init, page_get_type(src_page), 
+			src_page->uninit.aux, src_page->uninit.page_initializer);
+		
+		/* 부모 프로세스 페이지의 writable & 물리 프레임 내용 복사함 */
+		dst_page->writable = src_page->writable;
+		
+		if (!spt_insert_page(dst, dst_page)) {
+			return false;
+		}
+
+		if (src_page->frame != NULL && src_page->frame->kva != NULL) {
+			if (!vm_do_claim_page (dst_page)) {
+				return false;
+			}
+			memcpy (dst_page->frame->kva, src_page->frame->kva, PGSIZE);
+		}
+	}
+
+	return true;
+}
+
+void page_destroy (struct hash_elem *e, void *aux) {
+	struct page *p = hash_entry(e, struct page, hash_elem);
+	if (p == NULL) {
+		return;
+	}
+	destroy(p);
 }
 
 /* Free the resource hold by the supplemental page table */
 void supplemental_page_table_kill(struct supplemental_page_table *spt UNUSED)
 {
 	/* TODO: Destroy all the supplemental_page_table hold by thread and
-	 * TODO: writeback all the modified contents to the storage. */
+	 * TODO: writeback all the modified contents to the storage.
+	 * 1. hash_clear() 호출
+	 * 2. page->operation->destroy()
+	 * 	2-1. uninit_destroy() 구현
+	 * 	2-2. anon_destroy()구현
+	 * 3. hash table의 elem 해제하기 (hash_clear)
+	 * 4. process_exit() 함수의 마지막에 hash table을 없애기 (hash) */ 
+
+	hash_clear(&spt->hash_table, page_destroy);
 }
