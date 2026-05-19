@@ -346,7 +346,6 @@ void supplemental_page_table_kill(struct supplemental_page_table *spt UNUSED)
 	/* TODO: Destroy all the supplemental_page_table hold by thread and
 	 * TODO: writeback all the modified contents to the storage.
 	 * 1. hash_clear() 호출
-	 *  
 	 * 2. page->operation->destroy()
 	 * 	2-1. uninit_destroy() 구현
 	 * 	2-2. anon_destroy()구현
